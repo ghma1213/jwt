@@ -19,12 +19,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http.csrf().disable();
+        http.csrf().disable(); // CSRF 토큰 검증 방식 사용하지 않음
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션을 사용하지 않음
                 .and()
                 .addFilter(corsFilter) // 모든 요청 전 필터를 거친다. @CrossOrigin(인증은 안됨) -> 시큐리티 필터에 등록하면 인증 된다.
                 .formLogin().disable() // formLogin 사용 X -> form tag 사용 안함
-                .httpBasic().disable() // 기존 http 로그인 방식을 사용 안함
+                .httpBasic().disable() // 기존 http 로그인 방식을 사용 안함 - headers에 authorization: id, pw를 담아 인증하는 방식 (bearer 토큰을 담아 인증하는 방식)
                 .authorizeRequests()
                 .antMatchers("/api/v1/user/**")
                 .access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
