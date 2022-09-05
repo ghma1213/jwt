@@ -1,5 +1,7 @@
 package com.cos.jwt.config;
 
+import com.cos.jwt.filter.MyFilter1;
+import com.cos.jwt.filter.MyFilter2;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +20,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http.csrf().disable(); // CSRF 토큰 검증 방식 사용하지 않음
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션을 사용하지 않음
                 .and()
