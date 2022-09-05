@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### FILE ###
+com/cos/jwt/config/jwt/JwtProperties.java

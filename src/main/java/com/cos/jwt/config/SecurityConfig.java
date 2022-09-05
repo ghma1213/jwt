@@ -1,8 +1,10 @@
 package com.cos.jwt.config;
 
 import com.cos.jwt.config.jwt.JwtAuthenticationFilter;
+import com.cos.jwt.config.jwt.JwtAuthorizationFilter;
 import com.cos.jwt.filter.MyFilter1;
 import com.cos.jwt.filter.MyFilter2;
+import com.cos.jwt.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,10 +22,11 @@ import org.springframework.security.web.context.SecurityContextHolderFilter;
 public class SecurityConfig {
 
     private final CorsConfig corsConfig;
+    private final UserRepository userRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.addFilterBefore(new MyFilter1(), SecurityContextHolderFilter.class);
+//        http.addFilterBefore(new MyFilter1(), SecurityContextHolderFilter.class);
         http.csrf().disable(); // CSRF 토큰 검증 방식 사용하지 않음
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션을 사용하지 않음
                 .and()
@@ -52,7 +55,7 @@ public class SecurityConfig {
             http
                     .addFilter(corsConfig.corsFilter()) // 모든 요청 전 필터를 거친다. @CrossOrigin(인증은 안됨) -> 시큐리티 필터에 등록하면 인증 된다.
                     .addFilter(new JwtAuthenticationFilter(authenticationManager))
-//                    .addFilter(new JwtAuthorizationFilter(authenticationManager, userRepository))
+                    .addFilter(new JwtAuthorizationFilter(authenticationManager, userRepository))
                     ;
         }
     }
