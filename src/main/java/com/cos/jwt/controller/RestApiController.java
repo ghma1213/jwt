@@ -13,17 +13,17 @@ public class RestApiController {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    @GetMapping("home")
+    @GetMapping("/home")
     public String home() {
         return "<h1>home</h1>";
     }
 
-    @PostMapping("token")
+    @PostMapping("/token")
     public String token() {
         return "<h1>token</h1>";
     }
 
-    @PostMapping("join")
+    @PostMapping("/join")
     public String join(@RequestBody User user) {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         user.setRoles("ROLE_USER");
