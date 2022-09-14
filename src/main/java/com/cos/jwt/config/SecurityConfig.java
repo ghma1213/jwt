@@ -5,6 +5,7 @@ import com.cos.jwt.config.jwt.JwtAuthorizationFilter;
 import com.cos.jwt.filter.MyFilter1;
 import com.cos.jwt.filter.MyFilter2;
 import com.cos.jwt.repository.UserRepository;
+import com.cos.jwt.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,7 @@ public class SecurityConfig {
 
     private final CorsConfig corsConfig;
     private final UserRepository userRepository;
+    private final UserService userService;
 
 //    @Bean
 //    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -75,7 +77,7 @@ public class SecurityConfig {
             AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);
             http
                     .addFilter(corsConfig.corsFilter()) // 모든 요청 전 필터를 거친다. @CrossOrigin(인증은 안됨) -> 시큐리티 필터에 등록하면 인증 된다.
-                    .addFilter(new JwtAuthenticationFilter(authenticationManager))
+                    .addFilter(new JwtAuthenticationFilter(authenticationManager, userService))
                     .addFilter(new JwtAuthorizationFilter(authenticationManager, userRepository))
                     ;
         }

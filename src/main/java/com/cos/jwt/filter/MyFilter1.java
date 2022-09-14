@@ -1,5 +1,7 @@
 package com.cos.jwt.filter;
 
+import com.cos.jwt.config.jwt.JwtProperties;
+
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,10 +21,10 @@ public class MyFilter1 implements Filter{
         // 그때 토큰이 넘어오면 이 토큰이 내가 만든 토큰이 맞는지 검증만 하면 된다.(RSA, HS256)
         if (req.getMethod().equals("POST")) {
             System.out.println("POST 요청됨");
-            String headerAuth = req.getHeader("Authorization");
+            String headerAuth = req.getHeader(JwtProperties.HEADER_STRING);
             System.out.println("headerAuth = " + headerAuth);
 
-            if (headerAuth.equals("cos")) {
+            if (headerAuth.equals(JwtProperties.SECRET)) {
                 chain.doFilter(req, res);
             } else {
                 PrintWriter out = res.getWriter();

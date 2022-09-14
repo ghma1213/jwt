@@ -31,6 +31,10 @@ public class RestApiController {
         return "회원가입 완료";
     }
 
+    // 누구나 가능
+    @GetMapping("/api/v1/all")
+    public String all() { return "all"; }
+
     // user, manager, admin 만 가능
     @GetMapping("/api/v1/user")
     public String user() {
