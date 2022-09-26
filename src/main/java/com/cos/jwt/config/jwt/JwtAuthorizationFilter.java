@@ -1,7 +1,12 @@
 package com.cos.jwt.config.jwt;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.Verification;
 import com.cos.jwt.config.auth.PrincipalDetails;
 import com.cos.jwt.model.User;
 import com.cos.jwt.repository.UserRepository;
@@ -16,6 +21,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
+import java.util.Objects;
 
 // 시큐리티가 filter 를 가지고 있는데, 그 필터 중에 BasicAuthenticationFilter 라는 것이 있음.
 // 권한이나 인증이 필요한 특정 주소를 요청했을 때 위 필터를 무조건 타게 되어 있음.
@@ -33,6 +40,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
+        System.out.println("인증이나 권한이 필요한 주소 요청됨");
         String header = request.getHeader(JwtProperties.HEADER_STRING);
         if (header == null || !header.startsWith(JwtProperties.TOKEN_PREFIX)) {
             chain.doFilter(request, response);
@@ -42,16 +50,19 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         String token = request.getHeader(JwtProperties.HEADER_STRING)
                 .replace(JwtProperties.TOKEN_PREFIX, "");
 
+        DecodedJWT decode = JWT.decode(token);
+        String payload = decode.getPayload();
+
         // 토큰 검증 (이게 인증이기 때문에 AuthenticationManager도 필요 없음)
         // 내가 SecurityContext에 집적접근해서 세션을 만들때 자동으로 UserDetailsService에 있는
         // loadByUsername이 호출됨.
-//        String username;
+        User user;
 //        try {
-            String username = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token)
+            String username = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).withIssuer(JwtProperties.ISSUER).build().verify(token)
                     .getClaim("username").asString();
 
             if (username != null) {
-                User user = userRepository.findByUsername(username);
+                 user = userRepository.findByUsername(username);
 
                 // 인증은 토큰 검증시 끝. 인증을 하기 위해서가 아닌 스프링 시큐리티가 수행해주는 권한 처리를 위해
                 // 아래와 같이 토큰을 만들어서 Authentication 객체를 강제로 만들고 그걸 세션에 저장!
@@ -64,13 +75,35 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
                 // 강제로 시큐리티의 세션에 접근하여 값 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
-//        } catch (Exception e) {
+//        } catch (TokenExpiredException e) {
 //            System.out.println("e = " + e);
+//            refreshTokenCheck(Objects.requireNonNull(user), request, response, chain);
 //        }
 
 
         chain.doFilter(request, response);
+    }
+
+    private void refreshTokenCheck(User user, HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
+        String refreshToken = user.getRefreshToken();
+        String username = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).withIssuer(JwtProperties.ISSUER).build().verify(refreshToken)
+                .getClaim("username").asString();
+        if (username != null) {
+            String jwtToken = JWT.create()
+                    .withIssuer(JwtProperties.ISSUER)
+                    .withSubject(user.getUsername())
+                    .withExpiresAt(new Date(System.currentTimeMillis()+JwtProperties.EXPIRATION_TIME))
+                    .withClaim("id", user.getId())
+                    .withClaim("username", user.getUsername())
+                    .sign(Algorithm.HMAC512(JwtProperties.SECRET));
+
+            response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX+jwtToken);
+            try {
+                chain.doFilter(request, response);
+            } catch (IOException | ServletException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
